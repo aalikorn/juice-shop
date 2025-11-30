@@ -10,26 +10,27 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
+      # 1. Checkout the repository
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-    - name: Set up Trivy
-      uses: aquasecurity/trivy-action@master
-      with:
-        scan-type: fs           # file system scan
-        format: cyclonedx       # SBOM format
-        output: sbom.json
-        output-format: json
+      # 2. Install Trivy
+      - name: Set up Trivy
+        uses: aquasecurity/trivy-action@master
 
-    - name: Generate SBOM
-      run: trivy sbom --output sbom.json .
+      # 3. Generate SBOM in CycloneDX format
+      - name: Generate SBOM
+        run: |
+          trivy sbom generate --output sbom.json --format cyclonedx .
 
-    - name: Scan for vulnerabilities
-      run: trivy fs --format template --template "@contrib/html.tpl" --output trivy-report.html .
+      # 4. Scan filesystem for vulnerabilities and generate HTML report
+      - name: Scan for vulnerabilities
+        run: |
+          trivy fs --format template --template "@contrib/html.tpl" --output trivy-report.html .
 
-    - name: Upload HTML report
-      uses: actions/upload-artifact@v4
-      with:
-        name: trivy-report
-        path: trivy-report.html
-
+      # 5. Upload HTML report as artifact
+      - name: Upload HTML report
+        uses: actions/upload-artifact@v3
+        with:
+          name: trivy-report
+          path: trivy-report.html
