@@ -1,0 +1,35 @@
+name: Trivy Dependency Scan
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  trivy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Set up Trivy
+      uses: aquasecurity/trivy-action@master
+      with:
+        scan-type: fs           # file system scan
+        format: cyclonedx       # SBOM format
+        output: sbom.json
+        output-format: json
+
+    - name: Generate SBOM
+      run: trivy sbom --output sbom.json .
+
+    - name: Scan for vulnerabilities
+      run: trivy fs --format template --template "@contrib/html.tpl" --output trivy-report.html .
+
+    - name: Upload HTML report
+      uses: actions/upload-artifact@v3
+      with:
+        name: trivy-report
+        path: trivy-report.html
+
